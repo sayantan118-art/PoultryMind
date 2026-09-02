@@ -1,0 +1,15 @@
+{
+  "family": "poultry-api",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "...",
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000
+        }
+      ]
+    }
+  ]
+}

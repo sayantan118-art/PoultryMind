@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: poultry_db_dev
+    environment:
+      POSTGRES_USER: poultry_user
+      POSTGRES_PASSWORD: poultry_dev_pass
+      POSTGRES_DB: poultry_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/aws/rds_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./infra/aws/rds_rls_policies.sql:/docker-entrypoint-initdb.d/02-rls.sql
+      - ./infra/aws/rds_indexes.sql:/docker-entrypoint-initdb.d/03-indexes.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poultry_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - poultry-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: poultry_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - poultry-network
+
+  # FastAPI Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: poultry_api_dev
+    environment:
+      DATABASE_URL: postgresql://poultry_user:poultry_dev_pass@postgres:5432/poultry_dev
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: development
+      JWT_SECRET_KEY: your_secret_key_for_dev_only_min_32_chars_long
+      JWT_ALGORITHM: HS256
+      APP_PORT: 8000
+      LOG_LEVEL: DEBUG
+      PYTHONPATH: /app
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - poultry-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  poultry-network:
+    driver: bridge
