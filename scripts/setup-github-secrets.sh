@@ -1,4 +1,7 @@
 #!/bin/bash
+# WARNING: This script creates real GitHub repository secrets that enable
+# AWS deployments and can trigger real AWS billing. Run it only with
+# explicit approval and a confirmed billing/usage plan.
 # GitHub Actions Secrets Setup Helper
 # Run this after setting up AWS IAM roles and Cognito
 

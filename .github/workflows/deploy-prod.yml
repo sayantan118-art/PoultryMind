@@ -1,9 +1,9 @@
+# Manual-only until AWS deployment is deliberately re-enabled. Do not
+# restore push triggers without explicit approval.
 name: Deploy to Production
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 env:
   AWS_REGION: ap-south-1
