@@ -17,7 +17,7 @@ services:
       - ./infra/aws/rds_rls_policies.sql:/docker-entrypoint-initdb.d/02-rls.sql
       - ./infra/aws/rds_indexes.sql:/docker-entrypoint-initdb.d/03-indexes.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U poultry_user"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-poultry_user} -d ${POSTGRES_DB:-poultry_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,6 +40,28 @@ services:
     networks:
       - poultry-network
 
+  # Seed reference data for the local demo
+  seed-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: poultry_seed_dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-poultry_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-poultry_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-poultry_dev_pass}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-poultry_user}:${POSTGRES_PASSWORD:-poultry_dev_pass}@postgres:5432/${POSTGRES_DB:-poultry_dev}
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python /app/infra/scripts/seed_master_data.py --database-url $$DATABASE_URL"
+    networks:
+      - poultry-network
+
   # FastAPI Backend
   api:
     build:
@@ -53,7 +75,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-poultry_user}:${POSTGRES_PASSWORD:-poultry_dev_pass}@postgres:5432/${POSTGRES_DB:-poultry_dev}
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: development
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-replace_with_local_dev_secret_min_32_chars}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local_dev_secret_key_32_chars_long}
       JWT_ALGORITHM: HS256
       APP_PORT: 8000
       LOG_LEVEL: DEBUG
@@ -65,6 +87,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      seed-demo:
+        condition: service_completed_successfully
     volumes:
       - ./apps/api:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload

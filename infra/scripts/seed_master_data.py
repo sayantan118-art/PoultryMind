@@ -5,13 +5,18 @@ Generates SQL INSERT statements for master data bootstrap.
 
 Usage:
     python seed_master_data.py > seed.sql
+    python seed_master_data.py --database-url postgresql://user:pass@localhost:5432/poultry_dev
     psql poultry_dev < seed.sql
 """
 
+import argparse
+import os
 import uuid
 import json
 from datetime import datetime, timedelta
 from typing import List, Tuple
+
+import psycopg2
 
 def generate_seed_sql() -> str:
     """Generate SQL INSERT statements for all master data."""
@@ -275,17 +280,43 @@ VALUES (
     return "\n".join(sql)
 
 
+def execute_seed_sql(database_url: str) -> None:
+    """Connect to PostgreSQL and execute the generated seed SQL."""
+    if not database_url:
+        raise ValueError("DATABASE_URL is required when executing seed data.")
+
+    sql = generate_seed_sql()
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+
+    print("Seed data inserted successfully.")
+
+
 def main():
-    """Generate and print SQL seed script."""
+    """Generate SQL or execute it directly against a PostgreSQL database."""
+    parser = argparse.ArgumentParser(description="Seed PoultryMind demo data")
+    parser.add_argument(
+        "--database-url",
+        default=os.getenv("DATABASE_URL"),
+        help="Optional PostgreSQL connection string. If omitted, print SQL to stdout.",
+    )
+    args = parser.parse_args()
+
+    if args.database_url:
+        execute_seed_sql(args.database_url)
+        return
+
     print("-- ==========================================")
     print("-- Poultry Farm Command Center")
     print("-- Master Data Seed Script v4.0")
     print("-- Generated: " + datetime.now().isoformat())
-    print("-- ==========================================\n")
-    
+    print("-- =========================================={\n}")
+
     sql = generate_seed_sql()
     print(sql)
-    
+
     print("\n-- ==========================================")
     print("-- Seed data generation complete")
     print("-- Usage: psql poultry_dev < seed.sql")
