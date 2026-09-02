@@ -54,6 +54,11 @@ out/
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+apps/api/.env
+apps/api/.env.development
+apps/api/.env.production
 
 # Alembic
 alembic/versions/__pycache__/

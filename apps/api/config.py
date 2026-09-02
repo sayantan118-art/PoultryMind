@@ -1,11 +1,17 @@
 # apps/api/config.py
+from pathlib import Path
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(
+            ".env",
+            str(Path(__file__).resolve().parent / ".env"),
+            str(Path(__file__).resolve().parents[2] / ".env"),
+        ),
         case_sensitive=True,
         extra="ignore",
     )

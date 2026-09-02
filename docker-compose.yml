@@ -6,9 +6,9 @@ services:
     image: postgres:15-alpine
     container_name: poultry_db_dev
     environment:
-      POSTGRES_USER: poultry_user
-      POSTGRES_PASSWORD: poultry_dev_pass
-      POSTGRES_DB: poultry_dev
+      POSTGRES_USER: ${POSTGRES_USER:-poultry_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-poultry_dev_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-poultry_dev}
     ports:
       - "5432:5432"
     volumes:
@@ -49,8 +49,8 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-poultry_dev}
       POSTGRES_USER: ${POSTGRES_USER:-poultry_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_dev_password}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-poultry_user}:${POSTGRES_PASSWORD:-change_me_local_dev_password}@postgres:5432/${POSTGRES_DB:-poultry_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-poultry_dev_pass}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-poultry_user}:${POSTGRES_PASSWORD:-poultry_dev_pass}@postgres:5432/${POSTGRES_DB:-poultry_dev}
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: development
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-replace_with_local_dev_secret_min_32_chars}
