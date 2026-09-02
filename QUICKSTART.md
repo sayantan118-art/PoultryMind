@@ -1,222 +1,29 @@
-# Quick Reference Guide
+# Quickstart
 
-**Last Updated:** May 9, 2026  
-**Project Status:** Phase 0 ✅ → Ready for Phase 1 🚀
+Use [SETUP.md](SETUP.md) as the canonical setup guide.
 
----
+## Fastest path
 
-## 🎯 What's Done vs What You Need to Do
-
-### ✅ AUTOMATED (Already Created)
-```
-✓ Project scaffolding (25 files)
-✓ Database schema + RLS + Indexes
-✓ SQLAlchemy ORM models
-✓ FastAPI skeleton + RLS middleware
-✓ Docker & Docker Compose
-✓ GitHub Actions workflows (dev + prod)
-✓ Comprehensive documentation (SETUP, DEPLOYMENT, API)
-✓ TypeScript types for frontend/mobile
-✓ Setup automation scripts (Windows/Linux/macOS)
-✓ Environment templates (.env.development, .env.production)
-✓ Enhanced seed script (16 tables with real data)
-✓ Master data seeding capability
-```
-
-### 📋 MANUAL STEPS (You Must Do)
-
-#### Required Before Running Locally
-- [ ] Install Docker & Docker Compose
-- [ ] Install Python 3.10+
-- [ ] Install Node.js 18+
-- [ ] Clone/open this repository
-
-#### Required Before Phase 1 Development
-- [ ] Generate JWT secret key
-- [ ] (Optional) Set up Cognito user pool (AWS)
-- [ ] (Optional) Create RDS dev instance (AWS)
-- [ ] Edit `apps/api/.env` with AWS credentials
-
-#### Required Before Production
-- [ ] AWS account setup (IAM roles, RDS, ElastiCache, Cognito, etc.)
-- [ ] GitHub repository secrets configuration
-- [ ] Database backups setup
-- [ ] Monitoring and alerting setup
-
----
-
-## 🚀 Getting Started in 3 Commands
-
-### Windows
-```powershell
-cd c:\My files\poultry managemnet
-scripts\setup.bat
-npm run dev
-```
-
-### Linux / macOS
 ```bash
-cd "c:\My files\poultry managemnet"  # or your path
-bash scripts/setup.sh
-npm run dev
-```
+cp .env.example .env
+# set your local secrets in .env
 
-### Manual Setup (if scripts don't work)
-```bash
 docker-compose up -d
-npm install
-cd apps/api && pip install -r requirements.txt && alembic upgrade head
-cd ../..
-npm run dev
 ```
 
----
+Then verify:
 
-## 📁 Key Files Location
-
-| File | Purpose | Location |
-|------|---------|----------|
-| Database Schema | All tables, constraints | `infra/aws/rds_schema.sql` |
-| RLS Policies | Farm isolation | `infra/aws/rds_rls_policies.sql` |
-| Indexes | Query optimization | `infra/aws/rds_indexes.sql` |
-| Master Data | Seed script | `infra/scripts/seed_master_data.py` |
-| API Models | SQLAlchemy ORM | `apps/api/models/` |
-| Auth Logic | JWT + role checking | `apps/api/services/auth_service.py` |
-| Docker Dev | Local containers | `docker-compose.yml` |
-| API Docs | 50+ endpoints | `API.md` |
-| Setup Guide | Local development | `SETUP.md` |
-| Deploy Guide | AWS setup | `DEPLOYMENT.md` |
-| Phase 1 Tasks | Implementation checklist | `PHASE_1_CHECKLIST.md` |
-| TypeScript Types | Shared interfaces | `packages/shared-types/src/index.ts` |
-| Environment Dev | Dev config template | `apps/api/.env.development` |
-| Environment Prod | Prod config template | `apps/api/.env.production` |
-
----
-
-## 🔧 Development Workflow
-
-### Starting Work
-```bash
-# Start services
-docker-compose up -d
-
-# Activate Python venv
-cd apps/api
-source venv/bin/activate  # macOS/Linux
-# or
-venv\Scripts\activate  # Windows
-
-# Run migrations if DB changed
-alembic upgrade head
-
-# Start all dev servers
-cd ../..
-npm run dev
-```
-
-### During Development
-```bash
-# Watch backend changes
-# (uvicorn auto-reloads via docker-compose)
-
-# Watch frontend changes
-cd apps/dashboard
-npm run dev
-
-# Watch mobile changes
-cd apps/supervisor
-npm start
-```
-
-### Stopping
-```bash
-docker-compose down
-```
-
----
-
-## 🌐 Local URLs
-
-| Service | URL | Port |
-|---------|-----|------|
-| FastAPI Backend | http://localhost:8000 | 8000 |
-| API Docs (Swagger) | http://localhost:8000/docs | 8000 |
-| React Dashboard | http://localhost:5173 | 5173 |
-| React Native (Web) | http://localhost:8081 | 8081 |
-| PostgreSQL | localhost:5432 | 5432 |
-| Redis | localhost:6379 | 6379 |
-
----
-
-## 📊 Database Access
-
-### Using psql
-```bash
-# Connect to local dev DB
-psql postgresql://poultry_user:poultry_dev_pass@localhost:5432/poultry_dev
-
-# List tables
-\dt
-
-# Inspect schema
-\d farm
-
-# Test RLS (supervisor view)
-SET app.user_role = 'supervisor';
-SET app.farm_id = 'your-farm-uuid';
-SELECT * FROM farm;  -- Should only show that farm
-```
-
-### Using DBeaver (GUI)
-- Download: https://dbeaver.io
-- Host: `localhost`
-- Port: `5432`
-- Database: `poultry_dev`
-- User: `poultry_user`
-- Password: `poultry_dev_pass`
-
----
-
-## 🔐 JWT Secret Generation
-
-Generate a new secret key:
-```python
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-Output: `AbC_D1e2F3g4H5i6J7k8L9m0N1o2P3q4R5s6T7u8V9w0X1y2Z3a4B5c`
-
-Copy to `apps/api/.env`:
-```env
-JWT_SECRET_KEY=AbC_D1e2F3g4H5i6J7k8L9m0N1o2P3q4R5s6T7u8V9w0X1y2Z3a4B5c
-```
-
----
-
-## 🧪 Testing Endpoints
-
-### Health Check
 ```bash
 curl http://localhost:8000/api/v1/health
-
-# Response:
-# {"status": "healthy", "version": "1.0.0", "environment": "development"}
 ```
 
-### RLS Test
-```bash
-curl -X POST http://localhost:8000/api/v1/test-rls \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+## Important notes
 
-### Using Postman/Insomnia
-1. Import: `API.md` for endpoint specs
-2. Create Bearer token with JWT
-3. Test each endpoint
+- direct local Python uses `localhost`
+- Docker uses `postgres` and `redis`
+- secrets are required and not defaulted in code
 
----
-
-## 📝 Environment Variables Quick Reference
+For the full instructions, see [SETUP.md](SETUP.md).
 
 ### Development (.env.development)
 ```env

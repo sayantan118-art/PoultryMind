@@ -1,222 +1,28 @@
-# 🚀 Backend Implementation Complete - Ready for Phase 1
+# Getting started
 
-**Date:** May 11, 2026  
-**Status:** ✅ Phase 0 Complete | Backend Stable and Ready
+Use [SETUP.md](SETUP.md) as the canonical setup guide.
 
----
-
-## 📊 Executive Summary
-
-The backend development environment has been successfully stabilized and is now ready for Phase 1 API implementation. All services (PostgreSQL, Redis, FastAPI) are configured to run locally with a single command.
-
-**Key Achievement:** From unstable setup → Production-ready development environment in one implementation cycle.
-
----
-
-## ✅ What Was Accomplished
-
-### 1. **Fixed Critical Issues**
-- ✅ Alembic import resolution (relative → absolute imports)
-- ✅ Python package structure (added __init__.py files)
-- ✅ Docker container environment variables
-- ✅ Configuration handling
-
-### 2. **Created Automation**
-- ✅ `scripts/start-backend.sh` (Linux/macOS)
-- ✅ `scripts/start-backend.bat` (Windows)
-- ✅ One-command startup: `docker-compose up -d`
-
-### 3. **Generated Documentation**
-- ✅ `BACKEND_SETUP.md` (10KB comprehensive guide)
-- ✅ `IMPLEMENTATION_SUMMARY.md` (detailed changes)
-- ✅ Updated `README.md` with new quick start
-- ✅ Updated `QUICKSTART.md` with backend info
-
-### 4. **Enhanced Infrastructure**
-- ✅ `Dockerfile` with proper PYTHONPATH
-- ✅ `docker-compose.yml` with network and env
-- ✅ `config.py` with better defaults
-- ✅ Environment templates
-
----
-
-## 🎯 Current Architecture
-
-```
-┌─────────────────────────────────────────┐
-│         Local Development                │
-│                                          │
-│  ┌──────────────────────────────────┐  │
-│  │  FastAPI Backend (Port 8000)     │  │
-│  │  - Health: /api/v1/health        │  │
-│  │  - Swagger: /docs                │  │
-│  │  - RLS Middleware                │  │
-│  └──────────────────────────────────┘  │
-│           ↓ Connections ↓              │
-│  ┌──────────────────────────────────┐  │
-│  │  PostgreSQL (Port 5432)          │  │
-│  │  - Database: poultry_dev         │  │
-│  │  - RLS Policies: Active          │  │
-│  │  - Tables: 25+ with constraints  │  │
-│  └──────────────────────────────────┘  │
-│                                          │
-│  ┌──────────────────────────────────┐  │
-│  │  Redis Cache (Port 6379)         │  │
-│  │  - Cache layer                   │  │
-│  │  - Session store                 │  │
-│  └──────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
-
----
-
-## 🚀 How to Get Started
-
-### Option 1: Automated (Recommended) ⭐
-
-**Windows:**
-```powershell
-cd "c:\My files\poultry managemnet"
-.\scripts\start-backend.bat
-```
-
-**Linux/macOS:**
-```bash
-cd "c:\My files\poultry managemnet"
-bash scripts/start-backend.sh
-```
-
-### Option 2: Manual
+## Start here
 
 ```bash
-cd "c:\My files\poultry managemnet"
+cp .env.example .env
+# edit the local values in .env
+
 docker-compose up -d
-
-# Verify
-curl http://localhost:8000/api/v1/health
 ```
 
-### Verify Success
+Then open:
 
-```json
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "environment": "development"
-}
-```
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/docs
 
----
+## Important
 
-## 📁 What's Available
+- Local direct Python runs use `localhost` for Postgres/Redis.
+- Dockerized API runs use `postgres` and `redis` service names.
+- Secrets are required and should not be defaulted in code.
 
-### Running Services (When Started)
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| FastAPI Backend | `http://localhost:8000` | REST API |
-| Swagger UI | `http://localhost:8000/docs` | Interactive API docs |
-| PostgreSQL | `localhost:5432` | Database |
-| Redis | `localhost:6379` | Cache |
-
-### Documentation
-
-| File | Content |
-|------|---------|
-| `BACKEND_SETUP.md` | Complete setup guide (Read this first!) |
-| `README.md` | Updated with new quick start |
-| `QUICKSTART.md` | High-level overview |
-| `API.md` | Endpoint specifications |
-| `IMPLEMENTATION_SUMMARY.md` | Technical changes made |
-
-### Key Source Files
-
-```
-apps/api/
-├── main.py              # FastAPI application
-├── config.py            # Configuration (improved)
-├── dependencies.py      # Database connection
-├── requirements.txt     # Python dependencies
-├── alembic.ini         # Alembic config
-│
-├── models/              # SQLAlchemy ORM models
-│   ├── base.py         # UUID, timestamps, soft delete
-│   ├── flock.py        # Flock management
-│   ├── feed.py         # Feed formulas & batches
-│   ├── vaccine.py      # Vaccine scheduling
-│   ├── health.py       # Health monitoring
-│   ├── inventory.py    # Inventory tracking
-│   ├── master.py       # Master data
-│   └── intelligence.py # Reporting & analytics
-│
-├── services/
-│   └── auth_service.py  # JWT authentication
-│
-├── migrations/          # Database migrations (Alembic)
-│   ├── env.py          # Migration config (fixed)
-│   └── versions/       # Migration files
-│
-└── .env.development     # Configuration template
-```
-
----
-
-## 🔑 Key Features Ready
-
-### ✅ Database Layer
-- PostgreSQL with 25+ tables
-- Row-Level Security (RLS) policies
-- UUID primary keys
-- Soft delete support
-- Audit timestamps
-
-### ✅ API Foundation
-- FastAPI application running
-- CORS middleware configured
-- JWT authentication structure
-- RLS context middleware
-- Health check endpoint
-
-### ✅ Development Tools
-- Alembic migration management
-- SQLAlchemy ORM with models
-- Redis caching capability
-- Docker containerization
-- Environment variable configuration
-
----
-
-## 📋 Next Steps (Phase 1)
-
-### Week 1: Authentication Endpoints
-```python
-# apps/api/routers/auth.py
-POST /api/v1/auth/owner-login      # Owner login
-POST /api/v1/auth/supervisor-login # Supervisor login
-POST /api/v1/auth/refresh-token    # Token refresh
-POST /api/v1/auth/logout           # Logout
-```
-
-### Week 2-3: Core Data Management
-```python
-# apps/api/routers/flock.py
-POST   /api/v1/flocks              # Create flock
-GET    /api/v1/flocks              # List flocks
-GET    /api/v1/flocks/{id}         # Get flock
-PUT    /api/v1/flocks/{id}         # Update flock
-DELETE /api/v1/flocks/{id}         # Delete flock
-
-# apps/api/routers/feed.py
-POST   /api/v1/feed-batches        # Create batch
-GET    /api/v1/feed-batches        # List batches
-# ... more endpoints
-```
-
-### Week 4-6: Advanced Features
-- Health monitoring
-- Bird movements
-- Vaccine scheduling
-- Alert generation
+For the full developer setup, see [SETUP.md](SETUP.md).
 
 ### Week 7-10: Frontend & Testing
 - React dashboard

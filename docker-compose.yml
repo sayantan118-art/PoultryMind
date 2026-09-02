@@ -47,10 +47,13 @@ services:
       dockerfile: Dockerfile
     container_name: poultry_api_dev
     environment:
-      DATABASE_URL: postgresql://poultry_user:poultry_dev_pass@postgres:5432/poultry_dev
+      POSTGRES_DB: ${POSTGRES_DB:-poultry_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-poultry_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_local_dev_password}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-poultry_user}:${POSTGRES_PASSWORD:-change_me_local_dev_password}@postgres:5432/${POSTGRES_DB:-poultry_dev}
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: development
-      JWT_SECRET_KEY: your_secret_key_for_dev_only_min_32_chars_long
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-replace_with_local_dev_secret_min_32_chars}
       JWT_ALGORITHM: HS256
       APP_PORT: 8000
       LOG_LEVEL: DEBUG
