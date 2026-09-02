@@ -1,5 +1,5 @@
 # apps/api/models/flock.py
-from sqlalchemy import Column, String, Integer, ForeignKey, Date, CheckConstraint
+from sqlalchemy import Column, String, Integer, ForeignKey, Date, CheckConstraint, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from .base import Base, AuditMixin
@@ -44,8 +44,8 @@ class DailyFlockSnapshot(Base, AuditMixin):
     eggs_broken = Column(Integer, default=0)
     eggs_floor = Column(Integer, default=0)
     eggs_saleable = Column(Integer)
-    hdp_percent = Column(String) # Decimal in schema, using String for precision or properly map
-    
+    hdp_percent = Column(Numeric(6, 3))
+
     reported_by_name = Column(String(200), nullable=False)
     reported_by_login = Column(UUID(as_uuid=True), nullable=False)
     

@@ -1,5 +1,5 @@
 # apps/api/models/vaccine.py
-from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Decimal, CheckConstraint, DateTime
+from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Numeric, CheckConstraint, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base, AuditMixin
@@ -22,7 +22,7 @@ class VaccineScheduleItem(Base, AuditMixin):
     target_day = Column(Integer, nullable=False)
     flexibility_window_days = Column(Integer, default=3)
     method = Column(String(50))
-    dose_ml_per_bird = Column(Decimal(8, 4))
+    dose_ml_per_bird = Column(Numeric(8, 4))
     is_mandatory = Column(Boolean, default=True)
     grace_days_before_escalate = Column(Integer, default=1)
     post_vaccine_watch_days = Column(Integer, default=7)
@@ -45,7 +45,7 @@ class VaccineEvent(Base, AuditMixin):
     actual_date = Column(Date)
     actual_method = Column(String(50))
     batch_number = Column(String(100))
-    coverage_percent = Column(Decimal(5, 2))
+    coverage_percent = Column(Numeric(5, 2))
     status = Column(String(30), default="scheduled")
     status_updated_at = Column(DateTime, default=datetime.utcnow)
 

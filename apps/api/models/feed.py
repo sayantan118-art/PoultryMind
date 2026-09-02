@@ -1,5 +1,5 @@
 # apps/api/models/feed.py
-from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Decimal, CheckConstraint, Time
+from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Numeric, CheckConstraint, Time
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base, AuditMixin
@@ -22,7 +22,7 @@ class FeedFormulaIngredient(Base, AuditMixin):
     formula_id = Column(UUID(as_uuid=True), ForeignKey("feed_formula.id"), nullable=False)
     formula_version = Column(Integer, nullable=False)
     raw_material_id = Column(UUID(as_uuid=True), ForeignKey("raw_material.id"), nullable=False)
-    quantity_per_100kg = Column(Decimal(8, 3), nullable=False)
+    quantity_per_100kg = Column(Numeric(8, 3), nullable=False)
     is_critical = Column(Boolean, default=False)
 
 class FeedBatch(Base, AuditMixin):
@@ -32,9 +32,9 @@ class FeedBatch(Base, AuditMixin):
     formula_id = Column(UUID(as_uuid=True), ForeignKey("feed_formula.id"), nullable=False)
     formula_version = Column(Integer, nullable=False)
     production_date = Column(Date, nullable=False)
-    quantity_kg = Column(Decimal(12, 3), nullable=False)
+    quantity_kg = Column(Numeric(12, 3), nullable=False)
     quality_status = Column(String(20), default="pass")
-    remaining_qty_kg = Column(Decimal(12, 3))
+    remaining_qty_kg = Column(Numeric(12, 3))
 
 class FeedDispatch(Base, AuditMixin):
     __tablename__ = "feed_dispatch"
@@ -43,5 +43,5 @@ class FeedDispatch(Base, AuditMixin):
     batch_id = Column(UUID(as_uuid=True), ForeignKey("feed_batch.id"), nullable=False)
     to_shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.id"), nullable=False)
     to_flock_id = Column(UUID(as_uuid=True), ForeignKey("flock.id"), nullable=False)
-    qty_dispatched_kg = Column(Decimal(10, 3), nullable=False)
-    qty_received_kg = Column(Decimal(10, 3))
+    qty_dispatched_kg = Column(Numeric(10, 3), nullable=False)
+    qty_received_kg = Column(Numeric(10, 3))
