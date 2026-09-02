@@ -1,9 +1,8 @@
 # apps/api/models/base.py
-import uuid
 from datetime import datetime
 from sqlalchemy import Column, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base, declared_attr
+from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
@@ -15,8 +14,4 @@ class SoftDeleteMixin:
     is_deleted = Column(Boolean, default=False, nullable=False)
 
 class AuditMixin(TimestampMixin, SoftDeleteMixin):
-    @declared_attr
-    def id(cls):
-        return Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
     created_by = Column(UUID(as_uuid=True), nullable=True)

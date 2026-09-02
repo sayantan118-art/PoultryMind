@@ -1,4 +1,5 @@
 # apps/api/models/master.py
+import uuid
 from sqlalchemy import Column, String, Integer, Boolean, Numeric, ForeignKey, UniqueConstraint, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -6,6 +7,7 @@ from .base import Base, AuditMixin
 
 class Company(Base, AuditMixin):
     __tablename__ = "company"
+    company_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     owner_name = Column(String(200), nullable=False)
     owner_phone = Column(String(20))
@@ -14,7 +16,8 @@ class Company(Base, AuditMixin):
 
 class Farm(Base, AuditMixin):
     __tablename__ = "farm"
-    company_id = Column(UUID(as_uuid=True), ForeignKey("company.id"), nullable=False)
+    farm_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("company.company_id"), nullable=False)
     farm_name = Column(String(200), nullable=False)
     farm_code = Column(String(10), nullable=False, unique=True)
     district = Column(String(100))
@@ -29,7 +32,8 @@ class Farm(Base, AuditMixin):
 
 class Shed(Base, AuditMixin):
     __tablename__ = "shed"
-    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.id"), nullable=False)
+    shed_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.farm_id"), nullable=False)
     shed_name = Column(String(100), nullable=False)
     shed_number = Column(Integer, nullable=False)
     capacity_birds = Column(Integer, nullable=False)
@@ -46,6 +50,7 @@ class Shed(Base, AuditMixin):
 
 class Breed(Base, AuditMixin):
     __tablename__ = "breed"
+    breed_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     breed_name = Column(String(100), nullable=False, unique=True)
     supplier = Column(String(200))
     expected_lay_start_day = Column(Integer, nullable=False, default=126)
@@ -58,11 +63,12 @@ class Breed(Base, AuditMixin):
 
 class AppUser(Base, AuditMixin):
     __tablename__ = "app_user"
+    user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cognito_sub = Column(String(200), unique=True)
     full_name = Column(String(200), nullable=False)
     phone_number = Column(String(20))
     role = Column(String(20), nullable=False)
-    assigned_farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.id"), nullable=True)
+    assigned_farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.farm_id"), nullable=True)
     pin_hash = Column(String(200))
     language_pref = Column(String(10), default="hi")
     expo_push_token = Column(String(200))
@@ -74,6 +80,7 @@ class AppUser(Base, AuditMixin):
 
 class VaccineMaster(Base, AuditMixin):
     __tablename__ = "vaccine_master"
+    vaccine_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     vaccine_name = Column(String(200), nullable=False)
     disease_target = Column(String(200))
     vaccine_type = Column(String(50), nullable=False)
@@ -90,6 +97,7 @@ class VaccineMaster(Base, AuditMixin):
 
 class RawMaterial(Base, AuditMixin):
     __tablename__ = "raw_material"
+    material_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     material_name = Column(String(200), nullable=False)
     unit = Column(String(20), default="kg")
     category = Column(String(50))

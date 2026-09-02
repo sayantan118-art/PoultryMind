@@ -1,4 +1,5 @@
 # apps/api/models/flock.py
+import uuid
 from sqlalchemy import Column, String, Integer, ForeignKey, Date, CheckConstraint, Numeric
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
@@ -6,11 +7,12 @@ from .base import Base, AuditMixin
 
 class Flock(Base, AuditMixin):
     __tablename__ = "flock"
+    flock_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     flock_code = Column(String(30), nullable=False, unique=True)
-    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.id"), nullable=False)
-    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.id"), nullable=False)
-    breed_id = Column(UUID(as_uuid=True), ForeignKey("breed.id"), nullable=False)
-    vaccine_template_id = Column(UUID(as_uuid=True), nullable=True) # FK to vaccine_schedule_template
+    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.farm_id"), nullable=False)
+    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.shed_id"), nullable=False)
+    breed_id = Column(UUID(as_uuid=True), ForeignKey("breed.breed_id"), nullable=False)
+    vaccine_template_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_template.template_id"), nullable=True)
     vaccine_template_version = Column(Integer)
     placement_date = Column(Date, nullable=False)
     initial_birds_placed = Column(Integer, nullable=False)
@@ -26,9 +28,10 @@ class Flock(Base, AuditMixin):
 
 class DailyFlockSnapshot(Base, AuditMixin):
     __tablename__ = "daily_flock_snapshot"
-    flock_id = Column(UUID(as_uuid=True), ForeignKey("flock.id"), nullable=False)
-    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.id"), nullable=False)
-    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.id"), nullable=False)
+    snapshot_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    flock_id = Column(UUID(as_uuid=True), ForeignKey("flock.flock_id"), nullable=False)
+    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.farm_id"), nullable=False)
+    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.shed_id"), nullable=False)
     snapshot_date = Column(Date, nullable=False)
     bird_age_days = Column(Integer, nullable=False)
     flock_stage = Column(String(20), nullable=False)
@@ -47,6 +50,6 @@ class DailyFlockSnapshot(Base, AuditMixin):
     hdp_percent = Column(Numeric(6, 3))
 
     reported_by_name = Column(String(200), nullable=False)
-    reported_by_login = Column(UUID(as_uuid=True), nullable=False)
+    reported_by_login = Column(UUID(as_uuid=True), ForeignKey("app_user.user_id"), nullable=False)
     
-    validation_flags = Column(JSONB, default=[])
+    validation_flags = Column(JSONB, default=list)

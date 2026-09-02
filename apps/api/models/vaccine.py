@@ -1,4 +1,5 @@
 # apps/api/models/vaccine.py
+import uuid
 from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Numeric, CheckConstraint, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -7,18 +8,20 @@ from datetime import datetime
 
 class VaccineScheduleTemplate(Base, AuditMixin):
     __tablename__ = "vaccine_schedule_template"
+    template_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     template_name = Column(String(200), nullable=False)
-    breed_id = Column(UUID(as_uuid=True), ForeignKey("breed.id"), nullable=False)
+    breed_id = Column(UUID(as_uuid=True), ForeignKey("breed.breed_id"), nullable=False)
     version_number = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
-    superseded_by = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_template.id"))
+    superseded_by = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_template.template_id"))
     change_reason = Column(String)
 
 class VaccineScheduleItem(Base, AuditMixin):
     __tablename__ = "vaccine_schedule_item"
-    template_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_template.id"), nullable=False)
+    item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    template_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_template.template_id"), nullable=False)
     sequence_number = Column(Integer, nullable=False)
-    vaccine_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_master.id"), nullable=False)
+    vaccine_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_master.vaccine_id"), nullable=False)
     target_day = Column(Integer, nullable=False)
     flexibility_window_days = Column(Integer, default=3)
     method = Column(String(50))
@@ -30,12 +33,13 @@ class VaccineScheduleItem(Base, AuditMixin):
 
 class VaccineEvent(Base, AuditMixin):
     __tablename__ = "vaccine_event"
-    flock_id = Column(UUID(as_uuid=True), ForeignKey("flock.id"), nullable=False)
-    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.id"), nullable=False)
-    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.id"), nullable=False)
-    schedule_item_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_item.id"), nullable=True)
+    event_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    flock_id = Column(UUID(as_uuid=True), ForeignKey("flock.flock_id"), nullable=False)
+    farm_id = Column(UUID(as_uuid=True), ForeignKey("farm.farm_id"), nullable=False)
+    shed_id = Column(UUID(as_uuid=True), ForeignKey("shed.shed_id"), nullable=False)
+    schedule_item_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_schedule_item.item_id"), nullable=True)
     is_adhoc = Column(Boolean, default=False)
-    vaccine_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_master.id"), nullable=False)
+    vaccine_id = Column(UUID(as_uuid=True), ForeignKey("vaccine_master.vaccine_id"), nullable=False)
     event_type = Column(String(30), nullable=False)
     
     target_date = Column(Date, nullable=False)

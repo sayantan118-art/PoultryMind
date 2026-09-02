@@ -1,70 +1,49 @@
+Good — that matches what T-001 required, and catching the two stray `Decimal` references in the `Breed` class before declaring it done is exactly the right instinct (grep once isn't enough; re-verify after every fix pass). The extra pass on `flock.py` is fine too as long as it was scoped narrowly — if it touched more than a leftover `Decimal` reference (e.g., the `hdp_percent` type or the mutable-default bug), just make sure `IMPLEMENTATION_STATUS.md` credits that under T-003, not folded silently into T-001, so the backlog stays honest about what's actually been done. If it was just a stray import, ignore this note.
+
+One thing to double check before moving on: the verification you ran used `importlib.import_module` with `sys.path` pointed at `apps/api`, which confirms the four files parse and their *direct* SQLAlchemy type usage is clean — but it doesn't yet build the full model graph through `Base.metadata` (that still fails today because `models/__init__.py` doesn't import these classes, and several `ForeignKey("farm.id")`-style references won't resolve until PKs are renamed). That's expected and is exactly what T-002/T-004 exist to fix — just flagging so nobody mistakes "imports cleanly in isolation" for "full metadata builds," which is a different, later milestone.
+
+Here's **T-002**, ready to hand to the agent as the new `NEXT_TASK.md`:
+
+---
+
 # NEXT_TASK.md
 
-**Task ID:** T-001
-**Priority:** P0 (blocks everything else)
-**Stage:** 0 → 1 (repository foundation / database foundation)
+**Task ID:** T-002
+**Priority:** P0
+**Stage:** 1 (database foundation)
 
 ## Objective
-
-Fix an invalid import that currently prevents the SQLAlchemy model layer from being imported at all: `Decimal` is imported from `sqlalchemy` in four model files, but `sqlalchemy` does not export a `Decimal` type — the correct SQLAlchemy type for fixed-precision numbers is `Numeric`. As written, `from sqlalchemy import ..., Decimal, ...` raises `ImportError` the moment any of these modules is loaded, which means Alembic cannot currently see any model metadata and no test that imports `apps.api.main` (which pulls in the model graph indirectly) can pass reliably today.
+Resolve the primary-key naming mismatch. `apps/api/models/base.py`'s `AuditMixin` currently auto-generates a generic `id` column as the primary key for every table. But the design source of truth — `infra/aws/rds_schema.sql` and `packages/shared-types/src/index.ts` — uses domain-specific PK names (`company_id`, `farm_id`, `shed_id`, `breed_id`, `flock_id`, `snapshot_id`, `event_id`, `batch_id`, etc.), and every `ForeignKey(...)` in the models points at `"<table>.id"`, which won't match once this is fixed. Since the SQL schema and shared-types are the more complete, mutually consistent artifacts, models change to match them — not the other way around.
 
 ## Files affected
-
-- `apps/api/models/master.py`
-- `apps/api/models/feed.py`
-- `apps/api/models/inventory.py`
-- `apps/api/models/vaccine.py`
-
-## Dependencies
-
-None. This is the first fix in the repository — nothing needs to exist before this.
+Every file in `apps/api/models/`: `base.py`, `master.py`, `flock.py`, `feed.py`, `health.py`, `intelligence.py`, `inventory.py`, `vaccine.py`.
 
 ## Implementation tasks
-
-1. In each of the four files, change the import line from `... Decimal, ...` to `... Numeric, ...`.
-2. Replace every usage of `Decimal(p, s)` as a column type with `Numeric(p, s)` (same precision/scale arguments, e.g. `Column(Decimal(8, 3), ...)` → `Column(Numeric(8, 3), ...)`).
-3. Replace bare `Decimal` (no precision args, e.g. `length_ft = Column(Decimal)` in `master.py`) with `Numeric` (also bare, or give it a sensible precision if one is obvious from `infra/aws/rds_schema.sql` — check the corresponding column there; `length_ft`/`width_ft` are untyped `DECIMAL` in the SQL file too, so bare `Numeric` is fine).
-4. Do not touch any other logic in these files as part of this task — this is a type-import fix only. (The primary-key naming mismatch and the `hdp_percent`/mutable-default issues in `flock.py` are separate tasks, T-002 and T-003 — leave them for those tasks.)
-5. After fixing, confirm nothing else in the four files still references `Decimal` (grep for it) and confirm no other model file has the same mistake (`grep -rn "Decimal" apps/api/models/*.py` should show zero remaining SQLAlchemy-type usages of `Decimal`; Python's own `decimal.Decimal` is not used anywhere in these files, so a clean zero-match is expected).
+1. In `base.py`, remove the auto-generated `id` column from `AuditMixin`. Each model now declares its own PK explicitly (don't try to derive it magically from the class/table name — explicit is safer and matches how `rds_schema.sql` names each PK independently, e.g. `event_id` is reused across two different tables with different meanings).
+2. For every model class, add its PK column using the exact name from `rds_schema.sql` (e.g. `Company.company_id`, `Farm.farm_id`, `Shed.shed_id`, `Flock.flock_id`, `DailyFlockSnapshot.snapshot_id`, `VaccineEvent.event_id`, `HealthEvent.event_id`, `FeedBatch.batch_id`, etc.) — `UUID(as_uuid=True), primary_key=True, default=uuid.uuid4`.
+3. Update every `ForeignKey("<table>.id")` reference across all model files to `ForeignKey("<table>.<table>_id")` matching step 2 (e.g. `ForeignKey("farm.id")` → `ForeignKey("farm.farm_id")`).
+4. Update every `relationship(...)` that relies on implicit PK/FK matching — SQLAlchemy usually infers this correctly once the FK column is right, but check any explicit `primaryjoin=` if present (there don't appear to be any yet, but verify).
+5. Do not rename any non-PK column, and do not add new tables/columns in this task — that's Stage 1's later tasks (T-004 onward).
 
 ## Acceptance criteria
-
-- `grep -rn "Decimal" apps/api/models/*.py` returns no results.
-- Each of the four fixed files imports successfully on its own:
-  ```bash
-  cd apps/api && python3 -c "from models import master, feed, inventory, vaccine"
-  ```
-  runs with no exception (note: this will still likely hit the separate PK/FK issues from T-002 if run against a real engine/metadata build — for T-001, success means the `ImportError` on `Decimal` is gone; a clean full-metadata build is T-002/T-004's job, not this task's).
-- No other file in the model layer or elsewhere in `apps/api` references `Decimal` as a SQLAlchemy column type.
-
-## Tests
-
-No new test file is required for this narrow a fix, but before marking this done, run:
-```bash
-cd apps/api && python3 -c "import ast; [ast.parse(open(f).read()) for f in ['models/master.py','models/feed.py','models/inventory.py','models/vaccine.py']]"
-```
-to confirm no syntax errors were introduced, and the import check in Acceptance Criteria above.
+- Every model's primary key column name matches its table's PK name in `rds_schema.sql` exactly.
+- No model retains a bare `id` column.
+- Every `ForeignKey` string resolves to a real `<table>.<column>` pair once all models are imported together (verified in the next step, since full-graph resolution needs T-004's `__init__.py` fix too — for T-002 alone, acceptance is: no FK string still says `.id`).
 
 ## Verification
-
 ```bash
-grep -rn "Decimal" apps/api/models/*.py    # expect: no output
-cd apps/api
-python3 -c "from models import master"
-python3 -c "from models import feed"
-python3 -c "from models import inventory"
-python3 -c "from models import vaccine"
+grep -rn "primary_key=True" apps/api/models/*.py    # every hit should be a domain-specific column, not "id ="
+grep -rn '"\.id"' apps/api/models/*.py               # expect no output (no ForeignKey still pointing at ".id")
+grep -rn 'ForeignKey(".*\.id")' apps/api/models/*.py # expect no output
 ```
-All four import commands should exit with no traceback.
 
 ## Definition of Done
-
-- [ ] All four files updated, `Decimal` → `Numeric` everywhere it was used as a column type.
-- [ ] `grep` confirms zero remaining occurrences.
-- [ ] All four modules import cleanly in isolation.
-- [ ] `IMPLEMENTATION_STATUS.md` created (if it doesn't exist yet — this is the first task, so it likely doesn't) and updated: T-001 moved to "Completed," T-002 set as "Next recommended task."
+- [ ] `base.py`'s `AuditMixin` no longer defines `id`.
+- [ ] Every model declares its own correctly-named PK.
+- [ ] All FK strings updated to match.
+- [ ] Both grep checks above return empty.
+- [ ] `IMPLEMENTATION_STATUS.md` updated: T-002 → Completed, T-003 → next recommended (fix `hdp_percent` type + mutable `validation_flags` default in `flock.py`, if not already folded into your T-001 bonus pass — check before starting so it isn't done twice).
 - [ ] Session handoff written per `DEVELOPMENT_GUIDE.md` Part 12.
 
 ## After this task
-
-Move immediately to **T-002** (resolve the primary-key naming mismatch between the generic `id` in `AuditMixin` and the domain-specific PK names used throughout `infra/aws/rds_schema.sql` and `packages/shared-types/src/index.ts`) — see `DEVELOPMENT_GUIDE.md` Part 7 for its full spec. Do not skip ahead to routers, auth, or the dashboard before Stage 1 (database foundation) is complete — see `DEVELOPMENT_GUIDE.md` Part 4.
+Proceed to **T-003** (if not already resolved) then **T-004** (wire all model classes into `models/__init__.py`) — that's when you'll get the first real signal on whether the full metadata graph builds cleanly end to end.
