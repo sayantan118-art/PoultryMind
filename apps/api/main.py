@@ -47,13 +47,18 @@ async def test_rls(
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user)
 ):
-    # Set session variables for RLS
-    db.execute(text(f"SET app.user_role = '{user.get('role')}';"))
-    if user.get("farm_id"):
-        db.execute(text(f"SET app.farm_id = '{user.get('farm_id')}';"))
-    if user.get("user_id"):
-        db.execute(text(f"SET app.user_id = '{user.get('user_id')}';"))
-    
+    # Set session variables for RLS without string interpolation.
+    for key, value in (
+        ("app.user_role", user.get("role")),
+        ("app.farm_id", user.get("farm_id")),
+        ("app.user_id", user.get("user_id")),
+    ):
+        if value is not None:
+            db.execute(
+                text("SELECT set_config(:key, :value, false)"),
+                {"key": key, "value": str(value)},
+            )
+
     return {"message": "RLS context set", "user": user}
 
 if __name__ == "__main__":
